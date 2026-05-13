@@ -1,0 +1,77 @@
+        body {
+            font-family: Comic Sans MS, Helvetica, sans-serif;
+            background-color: #c7d9eb;
+            margin: 10;
+            padding: 10;
+            line-height: 1.5;
+        }
+        h1 {
+            text-align: center;
+            color: #6a6a07;
+            margin-bottom: 10px;
+        }
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .navigation a {
+            display: inline-block;
+            color: #000000;
+            background-color: #f0e68c;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: bold;
+            border: 2px solid #000000;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .navigation a:hover {
+            background-color: #000000;
+            color: #f0e68c;
+        }
+        img {
+            display: block;
+            margin: 20px auto;
+            border-radius: 6px;
+            box-shadow: 5px 10px 10px rgba(157, 165, 5, 0.548);
+            transition: box-shadow 0.3s, color 1s;
+
+        }
+        img:hover {
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.198);
+        }
+        .container {
+            width: 80%;
+            max-width: 900px;
+            margin: auto;
+            background: rgb(235, 232, 185);
+            padding: 30px;
+            margin-top: 40px;
+            border-radius: 8px;
+            border: 3px solid #000000;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .source {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .source a {
+            display: inline-block;
+            text-align: center;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 2px solid #000000;
+            padding: 5px;
+            color: #000000;
+            background-color: #f0e68c;
+            text-decoration: none;
+            box-shadow: 0px 3px 8px rgb(254, 255, 171);
+            transition: background-color 0.3s, color 0.3s;
+
+        }
+        .source a:hover {
+            background-color: #000000;
+            color: #f0e68c;
+            box-shadow: 0px 3px 8px rgb(132, 133, 126);
+        }

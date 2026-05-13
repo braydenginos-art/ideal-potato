@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Minesweeper</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#1b1b2f;
+    color:white;
+    text-align:center;
+    margin:0;
+    padding:0;
+}
+
+/* ---------- MENU ---------- */
+
+#menu{
+    margin-top:80px;
+}
+
+button{
+    padding:12px 18px;
+    margin:8px;
+    border:none;
+    border-radius:6px;
+    font-size:16px;
+    cursor:pointer;
+    background:#06d6a0;
+    color:black;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#04b386;
+}
+
+/* ---------- GAME BOARD ---------- */
+
+#game{
+    display:none;
+    margin-top:20px;
+}
+
+#board{
+    margin:20px auto;
+    display:grid;
+    gap:4px;
+    justify-content:center;
+}
+
+.cell{
+    width:34px;
+    height:34px;
+    background:#44446a;
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    cursor:pointer;
+    user-select:none;
+}
+
+.revealed{
+    background:#dcdcf0;
+    cursor:default;
+}
+
+.mine{
+    background:#ff595e;
+}
+
+.flag{
+    background:#ffd166;
+}
+
+/* number colors */
+.n1{color:#0000ff;}
+.n2{color:#008200;}
+.n3{color:#ff0000;}
+.n4{color:#000084;}
+.n5{color:#840000;}
+.n6{color:#008284;}
+.n7{color:#000000;}
+.n8{color:#808080;}
+
+#topbar{
+    margin-top:15px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Minesweeper</h1>
+
+<!-- ---------- MENU ---------- -->
+<div id="menu">
+    <h2>Select Difficulty</h2>
+    <button onclick="startGame('easy')">Easy</button>
+    <button onclick="startGame('medium')">Medium</button>
+    <button onclick="startGame('hard')">Hard</button>
+</div>
+
+<!-- ---------- GAME ---------- -->
+<div id="game">
+
+<div id="topbar">
+    <button onclick="backToMenu()">Back</button>
+    <button onclick="restart()">Restart</button>
+</div>
+
+<div id="board"></div>
+
+</div>
+
+<script>
+
+let board = []
+let firstClick = true
+let gameOver = false
+
+let width, height, mineCount
+
+function setDifficulty(level){
+
+if(level === "easy"){
+    width = 8
+    height = 8
+    mineCount = 8
+}
+else if(level === "medium"){
+    width = 12
+    height = 12
+    mineCount = 25
+}
+else if(level === "hard"){
+    width = 16
+    height = 16
+    mineCount = 50
+}
+
+}
+
+/* ---------- START GAME ---------- */
+
+function startGame(level){
+
+setDifficulty(level)
+
+document.getElementById("menu").style.display="none"
+document.getElementById("game").style.display="block"
+
+initBoard()
+
+}
+
+/* ---------- BOARD INIT ---------- */
+
+function initBoard(){
+
+board = []
+firstClick = true
+gameOver = false
+
+const boardDiv = document.getElementById("board")
+boardDiv.innerHTML=""
+
+boardDiv.style.gridTemplateColumns = `repeat(${width}, 34px)`
+boardDiv.style.gridTemplateRows = `repeat(${height}, 34px)`
+
+for(let y=0;y<height;y++){
+board[y]=[]
+
+for(let x=0;x<width;x++){
+
+let cell = document.createElement("div")
+cell.className="cell"
+cell.dataset.x=x
+cell.dataset.y=y
+
+cell.addEventListener("click", handleClick)
+cell.addEventListener("contextmenu", flag)
+
+boardDiv.appendChild(cell)
+
+board[y][x]={
+mine:false,
+revealed:false,
+flag:false,
+count:0,
+el:cell
+}
+
+}
+
+}
+
+}
+
+/* ---------- MINE PLACEMENT (SAFE FIRST CLICK) ---------- */
+
+function placeMinesSafe(sx,sy){
+
+let forbidden = new Set()
+
+for(let dy=-1;dy<=1;dy++){
+for(let dx=-1;dx<=1;dx++){
+
+let nx=sx+dx
+let ny=sy+dy
+
+if(inBounds(nx,ny)){
+forbidden.add(nx+","+ny)
+}
+
+}}
+
+let placed=0
+
+while(placed<mineCount){
+
+let x=Math.floor(Math.random()*width)
+let y=Math.floor(Math.random()*height)
+
+if(!board[y][x].mine && !forbidden.has(x+","+y)){
+board[y][x].mine=true
+placed++
+}
+
+}
+
+calcNumbers()
+
+}
+
+/* ---------- NUMBER CALC ---------- */
+
+function calcNumbers(){
+
+for(let y=0;y<height;y++){
+for(let x=0;x<width;x++){
+
+if(board[y][x].mine) continue
+
+let c=0
+
+for(let dy=-1;dy<=1;dy++){
+for(let dx=-1;dx<=1;dx++){
+
+let nx=x+dx
+let ny=y+dy
+
+if(inBounds(nx,ny) && board[ny][nx].mine){
+c++
+}
+
+}}
+
+board[y][x].count=c
+
+}}
+
+}
+
+/* ---------- CLICK ---------- */
+
+function handleClick(){
+
+if(gameOver) return
+
+let x=parseInt(this.dataset.x)
+let y=parseInt(this.dataset.y)
+
+if(firstClick){
+placeMinesSafe(x,y)
+firstClick=false
+}
+
+reveal(x,y)
+
+checkWin()
+
+}
+
+/* ---------- REVEAL (BFS FLOOD FILL) ---------- */
+
+function reveal(x,y){
+
+let queue=[[x,y]]
+
+while(queue.length){
+
+let [cx,cy]=queue.shift()
+let cell=board[cy][cx]
+
+if(cell.revealed || cell.flag) continue
+
+cell.revealed=true
+cell.el.classList.add("revealed")
+
+if(cell.mine){
+
+cell.el.textContent="💣"
+cell.el.classList.add("mine")
+endGame(false)
+return
+
+}
+
+if(cell.count>0){
+
+cell.el.textContent=cell.count
+cell.el.classList.add("n"+cell.count)
+
+}else{
+
+for(let dy=-1;dy<=1;dy++){
+for(let dx=-1;dx<=1;dx++){
+
+let nx=cx+dx
+let ny=cy+dy
+
+if(inBounds(nx,ny)){
+queue.push([nx,ny])
+}
+
+}}
+
+}
+
+}
+
+}
+
+/* ---------- FLAG ---------- */
+
+function flag(e){
+
+e.preventDefault()
+if(gameOver) return
+
+let x=parseInt(this.dataset.x)
+let y=parseInt(this.dataset.y)
+
+let cell=board[y][x]
+
+if(cell.revealed) return
+
+cell.flag=!cell.flag
+
+if(cell.flag){
+cell.el.textContent="🚩"
+cell.el.classList.add("flag")
+}else{
+cell.el.textContent=""
+cell.el.classList.remove("flag")
+}
+
+}
+
+/* ---------- UTIL ---------- */
+
+function inBounds(x,y){
+return x>=0 && x<width && y>=0 && y<height
+}
+
+/* ---------- WIN CHECK ---------- */
+
+function checkWin(){
+
+let safe=width*height-mineCount
+let r=0
+
+for(let row of board){
+for(let c of row){
+if(c.revealed) r++
+}}
+
+if(r===safe) endGame(true)
+
+}
+
+/* ---------- END GAME ---------- */
+
+function endGame(win){
+
+gameOver=true
+
+for(let row of board){
+for(let c of row){
+
+if(c.mine){
+c.el.textContent="💣"
+c.el.classList.add("mine")
+}
+
+}}
+
+setTimeout(()=>{
+alert(win ? "You Win!" : "Game Over")
+},100)
+
+}
+
+/* ---------- MENU CONTROLS ---------- */
+
+function backToMenu(){
+
+document.getElementById("menu").style.display="block"
+document.getElementById("game").style.display="none"
+
+}
+
+function restart(){
+initBoard()
+}
+
+</script>
+
+</body>
+</html>
